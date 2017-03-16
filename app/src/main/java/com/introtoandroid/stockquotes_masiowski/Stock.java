@@ -4,10 +4,10 @@ package com.introtoandroid.stockquotes_masiowski;
  * Created by user on 3/15/17.
  */
 
-
-        import android.util.Log;
-        import java.net.*;
-        import java.io.*;
+import android.annotation.SuppressLint;
+import android.util.Log;
+import java.net.*;
+import java.io.*;
 
 
 public class Stock implements Serializable
@@ -20,13 +20,14 @@ public class Stock implements Serializable
 
     private static final String TAG_PREFIX = "edu.cofc.stock";
 
-    private String symbol;
-    private String lastTradeTime;
-    private String lastTradePrice;
-    private String change;
-    private String range;
-    private String name;
+    public String symbol;
+    public String lastTradeTime;
+    public String lastTradePrice;
+    public String change;
+    public String range;
+    public String name;
 
+    public boolean badName = false;
 
     public Stock(String symbol)
     {
@@ -37,8 +38,8 @@ public class Stock implements Serializable
     }
 
 
-    public void load() throws MalformedURLException, IOException
-    {
+    //@SuppressLint("LongLogTag")
+    public void load() throws MalformedURLException, IOException {
         URL url = new URL("http://finance.yahoo.com/d/quotes.csv?s=" + symbol
                 + QUOTE_FORMAT);
 
@@ -73,34 +74,42 @@ public class Stock implements Serializable
 
         in.close();
 
-        if (line != null && line.length() > 0)
-        {
+        if (line != null && line.length() > 0) {
             // parse the line and remove quotes where necessary
             String[] values = line.split(",");
             change = values[1].substring(1, values[1].length() - 1);
-            range  = values[2].substring(1, values[2].length() - 1);
-            name   = values[3].substring(1, values[3].length() - 1);
+            range = values[2].substring(1, values[2].length() - 1);
+            name = values[3].substring(1, values[3].length() - 1);
 
             // Since real names can have commas, handle possible rest of name.
-            for (int i = 4;  i < values.length;  ++i)
+            for (int i = 4; i < values.length; ++i)
                 name = name + ", " + values[i].substring(1, values[i].length() - 1);
+
+
 
             if (DEBUG)
                 Log.i(TAG_PREFIX + "Stock.load()", "name = " + name);
 
-            String lastTrade = values[0];
+            if (!name.contains("/")) {
 
-            // parse last trade time
-            int start = 1; // skip opening quote
-            int end = lastTrade.indexOf(" - ");
-            lastTradeTime = lastTrade.substring(start, end);
+                String lastTrade = values[0];
 
-            // parse last trade price
-            start = lastTrade.indexOf(">") + 1;
-            end = lastTrade.indexOf("<", start);
-            lastTradePrice = lastTrade.substring(start, end);
+                // parse last trade time
+                int start = 1; // skip opening quote
+                int end = lastTrade.indexOf(" - ");
+                lastTradeTime = lastTrade.substring(start, end);
+
+                // parse last trade price
+                start = lastTrade.indexOf(">") + 1;
+                end = lastTrade.indexOf("<", start);
+                lastTradePrice = lastTrade.substring(start, end);
+            }
+            else{
+                badName = true;
+            }
         }
     }
+
 
 
     /**
@@ -155,4 +164,6 @@ public class Stock implements Serializable
     {
         return symbol;
     }
+
+    public boolean getOk(){return badName;}
 }
